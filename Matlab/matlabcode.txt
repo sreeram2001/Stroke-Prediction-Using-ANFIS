@@ -1,0 +1,37 @@
+#load dataset
+load 'dataset for matlab(text format)'/final_stroke_train.txt
+load 'dataset for matlab(text format)'/final_stroke_test.txt
+load 'dataset for matlab(text format)'/final_stroke_validation.txt
+
+xtrain=final_stroke_train(:,1:4);
+ytrain=final_stroke_train(:,5);
+xtest=final_stroke_test(:,1:4);
+ytest=final_stroke_test(:,5);
+xvalid=final_stroke_validation(:,1:4);
+yvalid=final_stroke_validation(:,5);
+
+#Anfis generation
+genOpt = genfisOptions('GridPartition');
+genOpt.NumMembershipFunctions = [2 3 3 3];
+genOpt.InputMembershipFunctionType = 'trimf';
+inFIS = genfis(xtrain,ytrain,genOpt);
+opt = anfisOptions('InitialFIS',inFIS,'EpochNumber',300);
+opt.DisplayANFISInformation = 1;
+opt.DisplayErrorValues = 1;
+opt.DisplayStepSize = 0;
+opt.DisplayFinalResults = 1;
+opt.ValidationData = [xvalid yvalid];
+[outFIS,trainError,stepSize,chkFIS,chkError]=anfis([xtrain ytrain],opt);
+
+#plot training error and checking Error
+c= [1:300];
+plot(c,trainError,'.b',c,chkError,'*r')
+legend('TrainingError','chekingError')
+
+#Area under curve
+ypred=evalfis(outFIS,xtrain);
+[fpr,tpr,T,AUC]=perfcurve(ytrain,ypred,1);
+plot(fpr,tpr,'LineWidth',4);
+title('ROC curve')
+xlabel('False positive rate'); ylabel('True positive rate');
+AUC
